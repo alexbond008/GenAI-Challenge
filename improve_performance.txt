@@ -1,0 +1,42 @@
+
+1. improve this performance and apply all the notes in the readme.
+Response: GitHub Copilot
+
+Optimised code (keeps 2000‑bit length, faster by reusing Random instances, using parallel generation, pre-sizing, and avoiding per‑iteration object setup).
+<CODE>
+Notes (embedded as comments in code):
+
+Bit length remains 2000 (BIT_LENGTH constant).
+Parallel generation uses all available cores (can disable by setting PARALLEL = false).
+Uses ThreadLocalRandom to avoid creating many Random objects.
+BigInteger.probablePrime is the most direct API for generating a probable prime of a given bit length.
+Warm-up added in Main to let JIT optimize before timing.
+
+2. How do I time it and actually know if the performance is better ??
+
+GitHub Copilot
+
+If you just want to run and time it:
+
+Open terminal in improve-performance folder.
+Compile:
+javac -d out src\PrimeGenerator.java src\Main.java
+Run (default 100 primes):
+java -cp out Main
+Run with a different count (e.g. 50):
+java -cp out Main 50
+Do multiple timing runs (ignore first – JIT warm‑up):
+for /l %i in (1,1,5) do java -cp out Main 50
+If using Maven (and you have a pom.xml), put classes under src/main/java and run:
+
+mvn -q clean compile exec:java -Dexec.mainClass=Main -Dexec.args="50"
+To compare versions:
+
+Record (end - start) ms printed.
+Make one change at a time.
+Keep BIT_LENGTH at 2000 (already enforced).
+Need profiling deeper? Use:
+
+javac -d out -g src\*.java
+java -Xms512m -Xmx2g -cp out Main 50
+Ask if you need a JMH benchmark or unit test 
