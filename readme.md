@@ -1,114 +1,72 @@
-# Welcome to the Neueda Generative AI JAM Session
-
-![Alt text](./images/genaijam.png)
+# Compact Disc REST Service
 
 ## Introduction
-In this JAM session, we will explore the exciting world of Generative AI and its
-applications. In this session, we will be focusing on the use of Gen AI in the world of 
-building, testing, and deploying applications.
 
-Your session today will comprise of a series of challenges that will address different capabilities of Generative AI.
+This application is a Java-based RESTful web service built using the Spring Boot framework. It provides API endpoints to manage a catalog of Compact Discs (CDs). It uses MySQL for data persistence and integrates Swagger for API documentation.
 
-Your instructor will guide you through the challenges and provide you with the necessary resources and support to complete them successfully.
+## Project Structure
 
-Each challenge can be found in a subfolder in the this Git repository.
+The project is organized into the following main directories:
 
-## Pre-requisites
-In order to complete this session, you will need to have the following:
+-   `src/`: Contains the Java source code for the application, following standard Maven layout.
+    -   `src/main/java`: Application source files, including entities, repositories, services, and the REST controller.
+    -   `src/main/resources`: Application configuration files, like `application.properties`, and static web content.
+        - `static/`: Contains HTML, CSS, and JavaScript files for simple front-end interaction with the API.
+    -   `src/test/java`: Unit and integration tests (currently not implemented).
+-   `sql/`: Contains SQL scripts for database setup, such as creating the schema and tables (`createTables.sql`).
+-   `rest/`: Contains files for testing the REST API endpoints (`.rest` files).
+-   `pom.xml`: The Maven Project Object Model file. It defines project dependencies, plugins, and build configurations.
 
-- The ability to clone this repository to the machine you are using for the JAM session
-- The ability to install and run different tools and applications (if you are using one of our VMs, then these will be pre-installed)
-- Access to at least one Developer centric GenAI tool such as Github CoPilot, SourceGraph Cody, or Amazon Q. 
+## Prerequisites
 
-## Setting up your VM Environment
-If you are using a VM, then complete the following steps:
+To build and run this project, you will need:
+-   Java Development Kit (JDK), version 11 or later.
+-   Apache Maven.
+-   A running instance of MySQL.
 
-### Clone the Repository
-1. Using your virtual machine, open your preferred browser and navigate to this page http://go.neueda.com/jam. You have probably already done this since you are reading the instructions! But make sure you are doing this from the virtual machine browser, not your local machine.
-2. At the top of this Web page in BitBucket, click the **Clone** button.
-3. Click **Clone** again.
-4. Copy the URL.
-5. In your virtual machine, create a new folder called **C:\GenAIJam**.
-6. Using **Windows Explorer**, right click on your **c:\GenAIJam** folder, and then click **Git Bash here**.
-7. At the **Git bash terminal**, right click, and then click **Paste** to paste in the git clone command, and then press **Enter**.
+## Setup and Installation
 
-### Set up GenAI Tools
-1. If you do not already have one, create a PERSONAL Github account
-2. Open VS Code
-3. Follow the instructions here to sign in to Copilot:
+1.  **Database Setup**:
+    -   Connect to your MySQL server.
+    -   Run the SQL script located in `sql/createTables.sql` to create the `conygre` database, the `compact_discs` and `tracks` tables, and populate them with initial data.
 
-[https://go.neueda.com/setup](https://go.neueda.com/setup)
+2.  **Application Configuration**:
+    -   Open the `src/main/resources/application.properties` file.
+    -   Update the database connection properties (`spring.datasource.url`, `spring.datasource.username`, `spring.datasource.password`) to match your MySQL environment.
 
-4. Check the course website for details of how to use the other tools.
+## Building and Running the Application
 
+1.  **Build the project**:
+    Open a terminal in the project root and run the following Maven command to compile the code and package it into a JAR file.
+    ```sh
+    mvn clean install
+    ```
 
-## Project Teams - Playing to win or playing to learn?
+2.  **Run the application**:
+    You can run the application using the Spring Boot Maven plugin:
+    ```sh
+    mvn spring-boot:run
+    ```
+    Alternatively, you can run the packaged JAR file directly:
+    ```sh
+    java -jar target/CompactDiscRestDataBoot-0.0.1-SNAPSHOT.jar
+    ```
+    Once started, the application will be accessible at `http://localhost:8080`.
 
-![Alt text](images/winning.jpeg)
+## API Endpoints
 
-You will be placed into groups of 3-4 people. This will be done relatively quickly, so please be prepared to work with people you don't know. Points will be awarded for each challenge that you complete. You can decide as a project team whether you want to work to win, or work to learn. You will learn either way, but your approach to the session will be different if you are just trying to win, vs, wanting to just learn together. There is no right or wrong approach, just different approaches. You will need to decide as a team which approach you want to take.
+The application exposes several REST endpoints for managing compact discs. You can find sample requests in the `rest/` directory.
 
-## Structure of the Day
+-   `GET /api/compactdiscs`: Retrieves a list of all compact discs.
+-   `GET /api/compactdiscs/{id}`: Retrieves a single compact disc by its ID.
+-   `POST /api/compactdiscs`: Creates a new compact disc. The request body should contain the CD's JSON representation.
+-   `DELETE /api/compactdiscs/{id}`: Deletes a compact disc by its ID.
+-   `DELETE /api/compactdiscs`: Deletes a compact disc by passing its JSON representation in the request body.
 
-Your instructor will guide you through the challenges and provide you with the necessary resources and support to complete them successfully. However, for those of you who would appreciate a heads up, the rough plan will be as follows:
+## API Documentation (Swagger)
 
-Morning Session:
+This project uses Swagger to provide interactive API documentation. Once the application is running, you can access the Swagger UI at:
 
-* Introduction to the session and the challenges
-* Overview of the tools and the capabilities that they have
-* Break out into teams for the first set of challenges
+-   **Swagger UI**: `http://localhost:8080/swagger-ui.html`
 
-Break for lunch
-
-Afternoon Session:
-
-* The final challenge
-* Scores will be calculated and announced
-* Prizes (if you're lucky!) will be given out!
-
-Note that your instructor may change this schedule based on the needs of the group. So please don't hold them to it!
-
-## Morning JAM Session
-
-### Challenge 1 - [No Readme](challenges/no-readme/readme.md)
-This challenge involves an application that has no readme file. Your task is to create a suitable readme file for the application.
-
-**100 points**
-
-### Challenge 2 - [No Tests](challenges/no-tests/readme.md)
-This challenge involves the same app as challenge 1. There are no tests however, so your challenge is to create a suitable set of unit tests for the application. Do not go beyond unit tests.
-
-**400 points**
-
-### Challenge 3 - [Find and Fix a Bug](challenges/find-and-fix-a-bug/README.md)
-This application has a bug in it. Your task is to find the bug and fix it!
-
-**200 points**
-
-### Challenge 4 - [Upgrade Required](challenges/upgrade-required/readme.md)
-This application was last touched in 2021 and is using an old version of the software. Can you upgrade it to the latest version?
-
-**400 points**
-
-### Challenge 5 - [Improve Performance](challenges/improve-performance/Readme.md)
-This application is slow and inefficient. Your task is to improve the performance of the application.
-
-**200 points**
-
-### Challenge 6 - [Fix an Unresponsive Website](challenges/fix-an-unresponsive-website/README.md)
-This is a problematic React application. It has a dodgy menu option. Can you sort it out?
-
-**300 points**
-
-### Challenge 7 - [Upgrade Required](challenges/upgrade-required/readme.md)
-This is an old Perl app that needs to be upgraded to Python. Can you take on the challenge with the help of AI?
-
-**500 points**
-
-## Afternoon JAM Session
-
-
-### Challenge 8 - I need an App!
-This is the final challenge of the day. In this challenge you will create an application from scratch!
-
-**1000 points**
+This interface allows you to view all available endpoints and test them directly from your browser.
