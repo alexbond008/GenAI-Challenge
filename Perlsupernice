@@ -1,0 +1,476 @@
+Introduction Many of the apps found in a lot of large corporations, especially financial corporation are written in Perl. Perl is a powerful and versatile programming language that is widely used in various domains, including web development, system administration, and data analysis.
+
+However, Perl has some limitations that can make it challenging to maintain and upgrade. One of the most significant challenges is the lack of a comprehensive testing framework. Without proper testing, it can be difficult to ensure that the code is working as expected and to identify and fix any issues that may arise.
+
+For this reason, and many others, Perl is often considered a legacy language, and many organizations are looking to migrate their Perl code to a more modern language.
+
+Your task is to take the Perl code in this folder and upgrade it to a Python version.
+
+The Challenge First, you will need to work out what this code actually does. Then, you will need to create a Python version of the code that does the same thing. The Python version should be written in a way that is easy to maintain and upgrade. There should also be e a set of tests that can be run to ensure that the code is working as expected.
+
+Your solution to this challenge will be marked on the following criteria: - The code is written to modern Python standards. - Your code works! - You have created a set of comprehensive unit tests that can be run to ensure that the code is working as expected.
+
+Points 500 points
+
+Mark Scheme 400 points - a complete Python implementation of the required application written to a professional standard following modern pythonic coding standards 100 points - you can explain to the instructor to their satisfaction how the Perl application worked and how the new Python application has mirrored the functionality.
+
+please refer to this task desc, make this code readable and explain to me what this code in perl does. i have no understanding of perl at all too
+
+
+
+GitHub Copilot
+Of course. Let's break down the Perl script and then provide a modern Python equivalent.
+
+What the Perl Script Does
+This Perl script is a classic ETL (Extract, Transform, Load) tool. Its job is to read data from a CSV file (prices.csv) and convert it into a set of SQL commands to create a database table and populate it with that data.
+
+Here is a step-by-step breakdown of its logic:
+
+Extract: It opens and reads the prices.csv file.
+Transform (Schema Generation):
+It reads the first line of the CSV, assuming it's the header row with column names.
+It "cleans" these column names by removing quotes and replacing spaces with underscores (_).
+It then peeks at the first data row to guess the data type for each column. If a value contains letters, it assumes the type is VARCHAR(255); otherwise, it assumes FLOAT.
+Using the cleaned column names and the inferred data types, it constructs a single CREATE TABLE SQL statement.
+Transform (Data Insertion):
+It processes the remaining rows in the CSV file one by one.
+For each row, it constructs an INSERT INTO ... VALUES ... SQL statement.
+It performs minor data cleaning, such as escaping single quotes and replacing empty values with 0.
+Load:
+It writes the generated CREATE TABLE statement into a new file named mysqlCreateSchema.sql.
+It writes all the generated INSERT statements into a new file named mysqlInsertValues.sql.
+In short, the script automates the process of creating a database schema and insertion script from a CSV file.
+
+Python Implementation
+Here is a modern, readable, and maintainable Python version that replicates the functionality of the Perl script. This code uses Python's built-in csv module for safer and more reliable file parsing and is structured into functions for clarity.
+
+<code v1>
+<\code v1>
+
+
+fix this file and you can add everything as comment underneath not as some pseudo code
+
+GitHub Copilot
+Of course. I have completed the main function in perlcode.py to correctly process all rows from the input CSV file.
+
+Below is the corrected and completed code. The primary change is finishing the loop that processes the remaining rows of the CSV file after the header and the first data row have been handled.
+
+import csv
+import os
+
+# --- Configuration ---
+INPUT_CSV_FILE = 'prices.csv'
+SCHEMA_OUTPUT_SQL_FILE = 'mysqlCreateSchema.sql'
+INSERTS_OUTPUT_SQL_FILE = 'mysqlInsertValues.sql'
+TABLE_NAME = 'nasdaq_prices'
+
+def clean_header(header):
+    """Cleans column names by removing quotes and replacing spaces with underscores."""
+    # The perl script does a complex series of chomps and regex, 
+    # but the net effect is to strip quotes and replace spaces.
+    return [h.strip().replace('"', '').replace(' ', '_') for h in header]
+
+def infer_column_types(data_row, num_columns):
+    """Infers column data types (FLOAT or VARCHAR) based on a sample data row."""
+    types = []
+    for i in range(num_columns):
+        value = data_row[i] if i < len(data_row) else ""
+        try:
+            # If it can be converted to a float, it's a numeric type.
+            float(value)
+            types.append('FLOAT')
+        except (ValueError, TypeError):
+            # Otherwise, it's a string type.
+            types.append('VARCHAR(255)')
+    return types
+
+def generate_create_table_sql(columns, types):
+    """Generates the CREATE TABLE SQL statement."""
+    if len(columns) != len(types):
+        raise ValueError("Mismatch between number of columns and types.")
+    
+    definitions = [f"`{col}` {typ}" for col, typ in zip(columns, types)]
+    
+    return (
+        f"DROP TABLE IF EXISTS `{TABLE_NAME}`;\n"
+        f"CREATE TABLE `{TABLE_NAME}` (\n"
+        f"  {',\n  '.join(definitions)}\n"
+        f") ENGINE=InnoDB DEFAULT CHARSET=latin1;\n"
+    )
+
+def generate_insert_sql(columns, values):
+    """Generates a single INSERT INTO SQL statement for a row of data."""
+    # Clean values: escape single quotes and default empty strings to '0'
+    cleaned_values = []
+    for val in values:
+        if not val:
+            cleaned_values.append('0')
+        else:
+            # Escape single quotes for SQL compatibility
+            escaped_val = val.replace("'", "''")
+            cleaned_values.append(f"'{escaped_val}'")
+            
+    # Ensure row has the correct number of columns, padding if necessary
+    while len(cleaned_values) < len(columns):
+        cleaned_values.append("'0'")
+
+    cols_sql = ', '.join([f"`{c}`" for c in columns])
+    vals_sql = ', '.join(cleaned_values)
+    
+    return f"INSERT INTO `{TABLE_NAME}` ({cols_sql}) VALUES ({vals_sql});\n"
+
+def main():
+    """Main function to run the ETL process."""
+    print(f"Starting ETL process for {INPUT_CSV_FILE}...")
+
+    if not os.path.exists(INPUT_CSV_FILE):
+        print(f"Error: Input file '{INPUT_CSV_FILE}' not found.")
+        return
+
+    try:
+        with open(INPUT_CSV_FILE, mode='r', encoding='utf-8') as infile, \
+             open(SCHEMA_OUTPUT_SQL_FILE, mode='w', encoding='utf-8') as schema_file, \
+             open(INSERTS_OUTPUT_SQL_FILE, mode='w', encoding='utf-8') as inserts_file:
+
+            reader = csv.reader(infile)
+            
+            # 1. Process Header
+            header_row = next(reader)
+            cleaned_columns = clean_header(header_row)
+            print(f"Processed headers: {cleaned_columns}")
+
+            # 2. Infer types from the first data row
+            first_data_row = next(reader)
+            column_types = infer_column_types(first_data_row, len(cleaned_columns))
+            print(f"Inferred column types: {column_types}")
+
+            # 3. Generate and write CREATE TABLE statement
+            create_sql = generate_create_table_sql(cleaned_columns, column_types)
+            schema_file.write(create_sql)
+            print(f"CREATE TABLE statement written to {SCHEMA_OUTPUT_SQL_FILE}")
+
+            # 4. Generate and write INSERT statements for all rows
+            # First, process the row we already read for type inference
+            insert_sql = generate_insert_sql(cleaned_columns, first_data_row)
+            inserts_file.write(insert_sql)
+            
+            # Then, process the rest of the file
+            rows_processed = 1
+            for row in reader:
+                insert_sql = generate_insert_sql(cleaned_columns, row)
+                inserts_file.write(insert_sql)
+                rows_processed += 1
+            
+            print(f"{rows_processed} INSERT statements written to {INSERTS_OUTPUT_SQL_FILE}")
+
+    except FileNotFoundError:
+        print(f"Error: Could not find {INPUT_CSV_FILE}")
+    except StopIteration:
+        print("Error: CSV file is empty or has only a header.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+    print("ETL process finished.")
+
+if __name__ == '__main__':
+    main()
+
+### Next Steps
+#
+# According to the readme.md, the next step is to create a comprehensive set of unit tests 
+# for this Python code to ensure it works as expected. This would involve creating a 
+# test_perlcode.py file and using a framework like pytest to test each function 
+# with sample inputs.
+```# filepath: c:\Users\Administrator\Desktop\genai-jam\genai-jam\challenges\perl\perlcode.py
+import csv
+import os
+
+# --- Configuration ---
+INPUT_CSV_FILE = 'prices.csv'
+SCHEMA_OUTPUT_SQL_FILE = 'mysqlCreateSchema.sql'
+INSERTS_OUTPUT_SQL_FILE = 'mysqlInsertValues.sql'
+TABLE_NAME = 'nasdaq_prices'
+
+def clean_header(header):
+    """Cleans column names by removing quotes and replacing spaces with underscores."""
+    # The perl script does a complex series of chomps and regex, 
+    # but the net effect is to strip quotes and replace spaces.
+    return [h.strip().replace('"', '').replace(' ', '_') for h in header]
+
+def infer_column_types(data_row, num_columns):
+    """Infers column data types (FLOAT or VARCHAR) based on a sample data row."""
+    types = []
+    for i in range(num_columns):
+        value = data_row[i] if i < len(data_row) else ""
+        try:
+            # If it can be converted to a float, it's a numeric type.
+            float(value)
+            types.append('FLOAT')
+        except (ValueError, TypeError):
+            # Otherwise, it's a string type.
+            types.append('VARCHAR(255)')
+    return types
+
+def generate_create_table_sql(columns, types):
+    """Generates the CREATE TABLE SQL statement."""
+    if len(columns) != len(types):
+        raise ValueError("Mismatch between number of columns and types.")
+    
+    definitions = [f"`{col}` {typ}" for col, typ in zip(columns, types)]
+    
+    return (
+        f"DROP TABLE IF EXISTS `{TABLE_NAME}`;\n"
+        f"CREATE TABLE `{TABLE_NAME}` (\n"
+        f"  {',\n  '.join(definitions)}\n"
+        f") ENGINE=InnoDB DEFAULT CHARSET=latin1;\n"
+    )
+
+def generate_insert_sql(columns, values):
+    """Generates a single INSERT INTO SQL statement for a row of data."""
+    # Clean values: escape single quotes and default empty strings to '0'
+    cleaned_values = []
+    for val in values:
+        if not val:
+            cleaned_values.append('0')
+        else:
+            # Escape single quotes for SQL compatibility
+            escaped_val = val.replace("'", "''")
+            cleaned_values.append(f"'{escaped_val}'")
+            
+    # Ensure row has the correct number of columns, padding if necessary
+    while len(cleaned_values) < len(columns):
+        cleaned_values.append("'0'")
+
+    cols_sql = ', '.join([f"`{c}`" for c in columns])
+    vals_sql = ', '.join(cleaned_values)
+    
+    return f"INSERT INTO `{TABLE_NAME}` ({cols_sql}) VALUES ({vals_sql});\n"
+
+def main():
+    """Main function to run the ETL process."""
+    print(f"Starting ETL process for {INPUT_CSV_FILE}...")
+
+    if not os.path.exists(INPUT_CSV_FILE):
+        print(f"Error: Input file '{INPUT_CSV_FILE}' not found.")
+        return
+
+    try:
+        with open(INPUT_CSV_FILE, mode='r', encoding='utf-8') as infile, \
+             open(SCHEMA_OUTPUT_SQL_FILE, mode='w', encoding='utf-8') as schema_file, \
+             open(INSERTS_OUTPUT_SQL_FILE, mode='w', encoding='utf-8') as inserts_file:
+
+            reader = csv.reader(infile)
+            
+            # 1. Process Header
+            header_row = next(reader)
+            cleaned_columns = clean_header(header_row)
+            print(f"Processed headers: {cleaned_columns}")
+
+            # 2. Infer types from the first data row
+            first_data_row = next(reader)
+            column_types = infer_column_types(first_data_row, len(cleaned_columns))
+            print(f"Inferred column types: {column_types}")
+
+            # 3. Generate and write CREATE TABLE statement
+            create_sql = generate_create_table_sql(cleaned_columns, column_types)
+            schema_file.write(create_sql)
+            print(f"CREATE TABLE statement written to {SCHEMA_OUTPUT_SQL_FILE}")
+
+            # 4. Generate and write INSERT statements for all rows
+            # First, process the row we already read for type inference
+            insert_sql = generate_insert_sql(cleaned_columns, first_data_row)
+            inserts_file.write(insert_sql)
+            
+            # Then, process the rest of the file
+            rows_processed = 1
+            for row in reader:
+                insert_sql = generate_insert_sql(cleaned_columns, row)
+                inserts_file.write(insert_sql)
+                rows_processed += 1
+            
+            print(f"{rows_processed} INSERT statements written to {INSERTS_OUTPUT_SQL_FILE}")
+
+    except FileNotFoundError:
+        print(f"Error: Could not find {INPUT_CSV_FILE}")
+    except StopIteration:
+        print("Error: CSV file is empty or has only a header.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+    print("ETL process finished.")
+
+if __name__ == '__main__':
+    main()
+
+### Next Steps
+#
+# According to the readme.md, the next step is to create a comprehensive set of unit tests 
+# for this Python code to ensure it works as expected. This would involve creating a 
+# test_perlcode.py file and using a framework like pytest to test each function 
+# with sample inputs.
+
+
+
+
+
+import java.math.BigInteger;
+import java.util.List;
+
+public class Main {
+    public static void main(String[] args) {
+        int count = 100;
+        if (args.length > 0) {
+            try {
+                count = Integer.parseInt(args[0]);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        PrimeGenerator generator = new PrimeGenerator();
+
+        // Warm-up (JIT)
+        generator.getPrimes(2);
+
+        long start = System.currentTimeMillis();
+        List<BigInteger> results = generator.getPrimes(count);
+        long end = System.currentTimeMillis();
+
+        System.out.println("The time taken was " + (end - start) + " ms.");
+        System.out.println("First prime: " + results.get(0));
+    }
+}
+
+import csv
+import os
+
+# Get the absolute path to the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# --- Configuration ---
+# Construct absolute paths to ensure files are found regardless of where the script is run from
+INPUT_CSV_FILE = os.path.join(SCRIPT_DIR, 'prices.csv')
+SCHEMA_OUTPUT_SQL_FILE = os.path.join(SCRIPT_DIR, 'mysqlCreateSchema.sql')
+INSERTS_OUTPUT_SQL_FILE = os.path.join(SCRIPT_DIR, 'mysqlInsertValues.sql')
+TABLE_NAME = 'nasdaq_prices'
+
+def clean_header(header):
+    """Cleans column names by removing quotes and replacing spaces with underscores."""
+    # The perl script does a complex series of chomps and regex, 
+    # but the net effect is to strip quotes and replace spaces.
+    return [h.strip().replace('"', '').replace(' ', '_') for h in header]
+
+def infer_column_types(data_row, num_columns):
+    """Infers column data types (FLOAT or VARCHAR) based on a sample data row."""
+    types = []
+    for i in range(num_columns):
+        value = data_row[i] if i < len(data_row) else ""
+        try:
+            # If it can be converted to a float, it's a numeric type.
+            float(value)
+            types.append('FLOAT')
+        except (ValueError, TypeError):
+            # Otherwise, it's a string type.
+            types.append('VARCHAR(255)')
+    return types
+
+def generate_create_table_sql(columns, types):
+    """Generates the CREATE TABLE SQL statement."""
+    if len(columns) != len(types):
+        raise ValueError("Mismatch between number of columns and types.")
+    
+    definitions = [f"`{col}` {typ}" for col, typ in zip(columns, types)]
+    
+    return (
+        f"DROP TABLE IF EXISTS `{TABLE_NAME}`;\n"
+        f"CREATE TABLE `{TABLE_NAME}` (\n"
+        f"  {',\n  '.join(definitions)}\n"
+        f") ENGINE=InnoDB DEFAULT CHARSET=latin1;\n"
+    )
+
+def generate_insert_sql(columns, values):
+    """Generates a single INSERT INTO SQL statement for a row of data."""
+    # Clean values: escape single quotes and default empty strings to '0'
+    cleaned_values = []
+    for val in values:
+        if not val:
+            cleaned_values.append('0')
+        else:
+            # Escape single quotes for SQL compatibility
+            escaped_val = val.replace("'", "''")
+            cleaned_values.append(f"'{escaped_val}'")
+            
+    # Ensure row has the correct number of columns, padding if necessary
+    while len(cleaned_values) < len(columns):
+        cleaned_values.append("'0'")
+
+    cols_sql = ', '.join([f"`{c}`" for c in columns])
+    vals_sql = ', '.join(cleaned_values)
+    
+    return f"INSERT INTO `{TABLE_NAME}` ({cols_sql}) VALUES ({vals_sql});\n"
+
+def main():
+    """Main function to run the ETL process."""
+    print(f"Starting ETL process for {INPUT_CSV_FILE}...")
+
+    if not os.path.exists(INPUT_CSV_FILE):
+        print(f"Error: Input file '{INPUT_CSV_FILE}' not found.")
+        return
+
+    try:
+        with open(INPUT_CSV_FILE, mode='r', encoding='utf-8') as infile, \
+             open(SCHEMA_OUTPUT_SQL_FILE, mode='w', encoding='utf-8') as schema_file, \
+             open(INSERTS_OUTPUT_SQL_FILE, mode='w', encoding='utf-8') as inserts_file:
+
+            reader = csv.reader(infile)
+            
+            # 1. Process Header
+            header_row = next(reader)
+            cleaned_columns = clean_header(header_row)
+            print(f"Processed headers: {cleaned_columns}")
+
+            # 2. Infer types from the first data row
+            first_data_row = next(reader)
+            column_types = infer_column_types(first_data_row, len(cleaned_columns))
+            print(f"Inferred column types: {column_types}")
+
+            # 3. Generate and write CREATE TABLE statement
+            create_sql = generate_create_table_sql(cleaned_columns, column_types)
+            schema_file.write(create_sql)
+            print(f"CREATE TABLE statement written to {SCHEMA_OUTPUT_SQL_FILE}")
+
+            # 4. Generate and write INSERT statements for all rows
+            # First, process the row we already read for type inference
+            insert_sql = generate_insert_sql(cleaned_columns, first_data_row)
+            inserts_file.write(insert_sql)
+            
+            # Then, process the rest of the file
+            rows_processed = 1
+            for row in reader:
+                insert_sql = generate_insert_sql(cleaned_columns, row)
+                inserts_file.write(insert_sql)
+                rows_processed += 1
+            
+            print(f"{rows_processed} INSERT statements written to {INSERTS_OUTPUT_SQL_FILE}")
+
+    except FileNotFoundError:
+        print(f"Error: Could not find {INPUT_CSV_FILE}")
+    except StopIteration:
+        print("Error: CSV file is empty or has only a header.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+    print("ETL process finished.")
+
+if __name__ == '__main__':
+    main()
+
+### Next Steps
+#
+# According to the readme.md, the next step is to create a comprehensive set of unit tests 
+# for this Python code to ensure it works as expected. This would involve creating a 
+# test_perlcode.py file and using a framework like pytest to test each function 
+# with sample inputs.
+
+
+
+
+
